@@ -1,5 +1,6 @@
 /* jscs:disable requireCamelCaseOrUpperCaseIdentifiers */
 import Ember from 'ember';
+import Mirage from 'ember-cli-mirage';
 
 const {$, isBlank} = Ember;
 
@@ -62,10 +63,34 @@ export default function () {
         };
     });
 
+    this.post('/authentication/passwordreset', function (db, request) {
+        // jscs:disable requireObjectDestructuring
+        let {passwordreset} = $.deparam(request.requestBody);
+        let email = passwordreset[0].email;
+        // jscs:enable requireObjectDestructuring
+
+        if (email === 'unknown@example.com') {
+            return new Mirage.Response(404, {}, {
+                errors: [
+                    {
+                        message: 'There is no user with that email address.',
+                        errorType: 'NotFoundError'
+                    }
+                ]
+            });
+        } else {
+            return {
+                passwordreset: [
+                    {message: 'Check your email for further instructions.'}
+                ]
+            };
+        }
+    });
+
     /* Download Count ------------------------------------------------------- */
 
     let downloadCount = 0;
-    this.get('http://ghost.org/count/', function () {
+    this.get('https://count.ghost.org/', function () {
         downloadCount++;
         return {
             count: downloadCount

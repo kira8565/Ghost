@@ -3,7 +3,14 @@ import DS from 'ember-data';
 import SettingsSaveMixin from 'ghost/mixins/settings-save';
 import ValidationEngine from 'ghost/mixins/validation-engine';
 
-const {Controller, RSVP, computed, inject, isBlank, observer} = Ember;
+const {
+    Controller,
+    RSVP,
+    computed,
+    inject: {service},
+    isBlank,
+    observer
+} = Ember;
 const {Errors} = DS;
 const emberA = Ember.A;
 
@@ -15,7 +22,15 @@ export const NavItem = Ember.Object.extend(ValidationEngine, {
     validationType: 'navItem',
 
     isComplete: computed('label', 'url', function () {
-        return !(isBlank(this.get('label').trim()) || isBlank(this.get('url')));
+        let {label, url} = this.getProperties('label', 'url');
+
+        return !isBlank(label) && !isBlank(url);
+    }),
+
+    isBlank: computed('label', 'url', function () {
+        let {label, url} = this.getProperties('label', 'url');
+
+        return isBlank(label) && isBlank(url);
     }),
 
     init() {
@@ -26,8 +41,8 @@ export const NavItem = Ember.Object.extend(ValidationEngine, {
 });
 
 export default Controller.extend(SettingsSaveMixin, {
-    config: inject.service(),
-    notifications: inject.service(),
+    config: service(),
+    notifications: service(),
 
     blogUrl: computed('config.blogUrl', function () {
         let url = this.get('config.blogUrl');
@@ -76,6 +91,10 @@ export default Controller.extend(SettingsSaveMixin, {
             validationPromises;
 
         validationPromises = navItems.map((item) => {
+            if (item.get('last') && item.get('isBlank')) {
+                return;
+            }
+
             return item.validate();
         });
 
@@ -110,9 +129,11 @@ export default Controller.extend(SettingsSaveMixin, {
             let navItems = this.get('navigationItems');
             let lastItem = navItems.get('lastObject');
 
-            if (lastItem && lastItem.get('isComplete')) {
-                // Add new blank navItem
-                navItems.addObject(NavItem.create({last: true}));
+            if (lastItem) {
+                lastItem.validate().then(() => {
+                    // Add new blank navItem
+                    navItems.addObject(NavItem.create({last: true}));
+                });
             }
         },
 

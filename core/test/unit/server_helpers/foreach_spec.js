@@ -57,7 +57,7 @@ describe('{{#foreach}} helper', function () {
 
             runTest(_this, context, options);
 
-            options.fn.called.should.be.true;
+            options.fn.called.should.be.true();
             options.fn.getCalls().length.should.eql(_.size(context));
 
             _.each(context, function (value, index) {
@@ -82,12 +82,12 @@ describe('{{#foreach}} helper', function () {
 
             runTest(_this, context, options);
 
-            options.fn.called.should.be.true;
+            options.fn.called.should.be.true();
             options.fn.getCalls().length.should.eql(_.size(context));
 
             _.each(_.keys(context), function (value, index) {
                 options.fn.getCall(index).args[0].should.eql(context[value]);
-                should(options.fn.getCall(index).args[1].data).be.undefined;
+                should(options.fn.getCall(index).args[1].data).be.undefined();
             });
         });
 
@@ -108,12 +108,12 @@ describe('{{#foreach}} helper', function () {
 
             runTest(_this, context, options);
 
-            options.fn.called.should.be.true;
+            options.fn.called.should.be.true();
             options.fn.getCalls().length.should.eql(_.size(context));
 
             _.each(context, function (value, index) {
                 options.fn.getCall(index).args[0].should.eql(value);
-                should(options.fn.getCall(index).args[1].data).not.be.undefined;
+                should(options.fn.getCall(index).args[1].data).not.be.undefined();
 
                 // Expected properties
                 resultData[index].data.should.containEql(expected[index]);
@@ -150,7 +150,7 @@ describe('{{#foreach}} helper', function () {
 
             runTest(_this, context, options);
 
-            options.fn.called.should.be.true;
+            options.fn.called.should.be.true();
             options.fn.getCalls().length.should.eql(_.size(context));
 
             _.each(_.keys(context), function (value, index) {
@@ -185,12 +185,12 @@ describe('{{#foreach}} helper', function () {
             context = 'hello world this is ghost'.split(' ');
             runTest(_this, context, options);
 
-            options.fn.called.should.be.true;
+            options.fn.called.should.be.true();
             options.fn.getCalls().length.should.eql(_.size(context));
 
             _.each(context, function (value, index) {
                 options.fn.getCall(index).args[0].should.eql(value);
-                should(options.fn.getCall(index).args[1].data).not.be.undefined;
+                should(options.fn.getCall(index).args[1].data).not.be.undefined();
 
                 // Expected properties
                 resultData[index].data.should.containEql(expected[index]);
@@ -227,12 +227,12 @@ describe('{{#foreach}} helper', function () {
 
             runTest(_this, context, options);
 
-            options.fn.called.should.be.true;
+            options.fn.called.should.be.true();
             options.fn.getCalls().length.should.eql(_.size(context));
 
             _.each(_.keys(context), function (value, index) {
                 options.fn.getCall(index).args[0].should.eql(context[value]);
-                should(options.fn.getCall(index).args[1].data).not.be.undefined;
+                should(options.fn.getCall(index).args[1].data).not.be.undefined();
 
                 // Expected properties
                 resultData[index].data.should.containEql(expected[index]);
@@ -254,9 +254,9 @@ describe('{{#foreach}} helper', function () {
 
             runTest(_this, context, options);
 
-            options.fn.called.should.be.false;
-            options.inverse.called.should.be.true;
-            options.inverse.calledOnce.should.be.true;
+            options.fn.called.should.be.false();
+            options.inverse.called.should.be.true();
+            options.inverse.calledOnce.should.be.true();
         });
     });
 
@@ -374,6 +374,62 @@ describe('{{#foreach}} helper', function () {
         it('foreach with limit 3', function () {
             var templateString = '<ul>{{#foreach posts limit="3"}}<li>{{title}}</li>{{else}}not this{{/foreach}}</ul>',
                 expected = '<ul><li>first</li><li>second</li><li>third</li></ul>';
+
+            shouldCompileToExpected(templateString, arrayHash, expected);
+            shouldCompileToExpected(templateString, objectHash, expected);
+        });
+
+        it('foreach with from 2', function () {
+            var templateString = '<ul>{{#foreach posts from="2"}}<li>{{title}}</li>{{else}}not this{{/foreach}}</ul>',
+                expected = '<ul><li>second</li><li>third</li><li>fourth</li><li>fifth</li></ul>';
+
+            shouldCompileToExpected(templateString, arrayHash, expected);
+            shouldCompileToExpected(templateString, objectHash, expected);
+        });
+
+        it('foreach with to 4', function () {
+            var templateString = '<ul>{{#foreach posts to="4"}}<li>{{title}}</li>{{else}}not this{{/foreach}}</ul>',
+                expected = '<ul><li>first</li><li>second</li><li>third</li><li>fourth</li></ul>';
+
+            shouldCompileToExpected(templateString, arrayHash, expected);
+            shouldCompileToExpected(templateString, objectHash, expected);
+        });
+
+        it('foreach with from 2 and to 3', function () {
+            var templateString = '<ul>{{#foreach posts from="2" to="3"}}<li>{{title}}</li>{{else}}not this{{/foreach}}</ul>',
+                expected = '<ul><li>second</li><li>third</li></ul>';
+
+            shouldCompileToExpected(templateString, arrayHash, expected);
+            shouldCompileToExpected(templateString, objectHash, expected);
+        });
+
+        it('foreach with from 3 and limit 2', function () {
+            var templateString = '<ul>{{#foreach posts from="3" limit="2"}}<li>{{title}}</li>{{else}}not this{{/foreach}}</ul>',
+                expected = '<ul><li>third</li><li>fourth</li></ul>';
+
+            shouldCompileToExpected(templateString, arrayHash, expected);
+            shouldCompileToExpected(templateString, objectHash, expected);
+        });
+
+        it('foreach with from 2, to 5 and limit 3', function () {
+            var templateString = '<ul>{{#foreach posts from="2" to="5" limit="3"}}<li>{{title}}</li>{{else}}not this{{/foreach}}</ul>',
+                expected = '<ul><li>second</li><li>third</li><li>fourth</li><li>fifth</li></ul>';
+
+            shouldCompileToExpected(templateString, arrayHash, expected);
+            shouldCompileToExpected(templateString, objectHash, expected);
+        });
+
+        it('@first in foreach with from 2 and to 4', function () {
+            var templateString = '<ul>{{#foreach posts from="2" to="4"}}{{#if @first}}<li>{{title}}</li>{{/if}}{{/foreach}}</ul>',
+                expected = '<ul><li>second</li></ul>';
+
+            shouldCompileToExpected(templateString, arrayHash, expected);
+            shouldCompileToExpected(templateString, objectHash, expected);
+        });
+
+        it('@last in foreach with from 2 and to 4', function () {
+            var templateString = '<ul>{{#foreach posts from="2" to="4"}}{{#if @last}}<li>{{title}}</li>{{/if}}{{/foreach}}</ul>',
+                expected = '<ul><li>fourth</li></ul>';
 
             shouldCompileToExpected(templateString, arrayHash, expected);
             shouldCompileToExpected(templateString, objectHash, expected);

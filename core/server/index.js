@@ -14,7 +14,6 @@ var express     = require('express'),
     config      = require('./config'),
     errors      = require('./errors'),
     helpers     = require('./helpers'),
-    mailer      = require('./mail'),
     middleware  = require('./middleware'),
     migrations  = require('./data/migration'),
     models      = require('./models'),
@@ -64,9 +63,8 @@ function builtFilesExist() {
     }
 
     function checkExist(fileName) {
-        var errorMessage = 'Javascript files have not been built.',
-            errorHelp = '\nPlease read the getting started instructions at:' +
-                        '\nhttps://github.com/TryGhost/Ghost#getting-started';
+        var errorMessage = i18n.t('errors.index.javascriptFilesNotBuilt.error'),
+            errorHelp = i18n.t('errors.index.javascriptFilesNotBuilt.help', {link: '\nhttps://github.com/TryGhost/Ghost#getting-started'});
 
         return new Promise(function (resolve, reject) {
             fs.stat(fileName, function (statErr) {
@@ -92,33 +90,6 @@ function builtFilesExist() {
     return Promise.all(deferreds);
 }
 
-// This is run after every initialization is done, right before starting server.
-// Its main purpose is to move adding notifications here, so none of the submodules
-// should need to include api, which previously resulted in circular dependencies.
-// This is also a "one central repository" of adding startup notifications in case
-// in the future apps will want to hook into here
-function initNotifications() {
-    if (mailer.state && mailer.state.usingDirect) {
-        api.notifications.add({notifications: [{
-            type: 'info',
-            message: [
-                'Ghost is attempting to use a direct method to send email.',
-                'It is recommended that you explicitly configure an email service.',
-                'See <a href=\'http://support.ghost.org/mail\' target=\'_blank\'>http://support.ghost.org/mail</a> for instructions'
-            ].join(' ')
-        }]}, {context: {internal: true}});
-    }
-    if (mailer.state && mailer.state.emailDisabled) {
-        api.notifications.add({notifications: [{
-            type: 'warn',
-            message: [
-                'Ghost is currently unable to send email.',
-                'See <a href=\'http://support.ghost.org/mail\' target=\'_blank\'>http://support.ghost.org/mail</a> for instructions'
-            ].join(' ')
-        }]}, {context: {internal: true}});
-    }
-}
-
 // ## Initialise Ghost
 // Sets up the express server instances, runs init on a bunch of stuff, configures views, helpers, routes and more
 // Finally it returns an instance of GhostServer
@@ -131,6 +102,9 @@ function init(options) {
     // The server and its dependencies require a populated config
     // It returns a promise that is resolved when the application
     // has finished starting up.
+
+    // Initialize Internationalization
+    i18n.init();
 
     // Load our config.js file from the local file system.
     return config.load(options.config).then(function () {
@@ -158,8 +132,6 @@ function init(options) {
         return Promise.join(
             // Check for or initialise a dbHash.
             initDbHashAndFirstRun(),
-            // Initialize mail
-            mailer.init(),
             // Initialize apps
             apps.init(),
             // Initialize sitemaps
@@ -170,11 +142,6 @@ function init(options) {
     }).then(function () {
         var adminHbs = hbs.create();
 
-        // Initialize Internationalization
-        i18n.init();
-
-        // Output necessary notifications on init
-        initNotifications();
         // ##Configuration
 
         // return the correct mime type for woff files
